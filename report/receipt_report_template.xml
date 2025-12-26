@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_receipt_document">
+            <t t-call="web.basic_layout">
+                <style>
+                    @page {
+                        size: A4;
+                    }
+
+                    *,
+                    ::after,
+                    ::before,
+                    ::backdrop,
+                    ::file-selector-button {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                        border: none !important;
+                    }
+
+                    .rcr-page {
+                        margin: 0;
+                        padding: 0;
+                        font-family: sans-serif;
+                        font-size: 11px;
+                        color: #0a0a0a;
+                    }
+
+                    /* Header */
+                    .rcr-header {
+                        display: table;
+                        width: 100%;
+                        margin-bottom: 12px;
+                        border-bottom: 1px solid #0a0a0a !important;
+                        padding-bottom: 10px;
+                    }
+                    .rcr-header > div { display: table-cell; vertical-align: top; }
+                    .rcr-header-left { width: 40%; }
+                    .rcr-header-right { width: 60%; text-align: right; }
+                    .rcr-logo { max-height: 60px; margin-bottom: 4px; }
+                    .rcr-company-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+                    .rcr-company-details { font-size: 10px; color: #525252; line-height: 1.4; }
+
+                    /* Title */
+                    .rcr-title { text-align: center; font-size: 18px; font-weight: bold; margin: 10px 0; }
+
+                    /* Info Table */
+                    .rcr-info-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 12px; }
+                    .rcr-info-table td { padding: 6px; border-top: 1px solid #d4d4d4 !important; border-bottom: 1px solid #d4d4d4 !important; }
+                    .rcr-info-label { background: #f5f5f5; font-weight: bold; width: 18%; }
+
+                    /* Product Table */
+                    .rcr-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px; }
+                    .rcr-table th { background: #f5f5f5; border: 1px solid #0a0a0a !important; padding: 6px 4px; text-align: center; font-weight: bold; }
+                    .rcr-table td { border: 1px solid #0a0a0a !important; padding: 5px 4px; vertical-align: middle; }
+                    .rcr-center { text-align: center; }
+                    .rcr-img { max-width: 45px; max-height: 45px; object-fit: contain; }
+
+                    /* Signatures */
+                    .rcr-sig-section { display: flex; justify-content: space-between; width: 100%; margin-top: 20px; }
+                    .rcr-sig-box { width: 30%; }
+                    .rcr-sig-inner { border: 1px solid #ccc !important; padding: 10px; height: 120px; background: #ffffff; display: flex; flex-direction: column; }
+                    .rcr-sig-title { font-weight: bold; font-size: 10px; border-bottom: 1px solid #000 !important; padding-bottom: 3px; margin-bottom: 8px; flex-shrink: 0; }
+                    .rcr-sig-area { text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic; font-size: 9px; }
+                    .rcr-sig-area img { max-width: 100px; max-height: 50px; object-fit: contain; }
+                    .rcr-sig-info { font-size: 9px; flex-shrink: 0; }
+
+                    .rcr-note { margin-top: 15px; padding: 8px; background: #f5f5f5; font-size: 9px; }
+                </style>
+
+                <t t-foreach="docs" t-as="o">
+                    <div class="rcr-page">
+                        <!-- Header -->
+                        <div class="rcr-header">
+                            <div class="rcr-header-left">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" class="rcr-logo"/>
+                            </div>
+                            <div class="rcr-header-right">
+                                <div class="rcr-company-name" t-field="o.company_id.name"/>
+                                <div class="rcr-company-details">
+                                    <t t-if="o.company_id.street"><span t-field="o.company_id.street"/><br/></t>
+                                    <t t-if="o.company_id.city"><span t-field="o.company_id.city"/></t>
+                                    <t t-if="o.company_id.state_id">, <span t-field="o.company_id.state_id.name"/></t>
+                                    <t t-if="o.company_id.zip"> <span t-field="o.company_id.zip"/></t>
+                                    <t t-if="o.company_id.country_id"><br/><span t-field="o.company_id.country_id.name"/></t>
+                                    <t t-if="o.company_id.phone"><br/>Tel: <span t-field="o.company_id.phone"/></t>
+                                    <t t-if="o.company_id.email"> | Email: <span t-field="o.company_id.email"/></t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rcr-title">RECEIPT REPORT</div>
+
+                        <!-- Info Table -->
+                        <table class="rcr-info-table">
+                            <tr>
+                                <td class="rcr-info-label">Receipt Number</td>
+                                <td><t t-out="o.name"/></td>
+                                <td class="rcr-info-label">Vendor</td>
+                                <td><t t-out="o.partner_id.name"/></td>
+                            </tr>
+                            <tr>
+                                <td class="rcr-info-label">PO Reference</td>
+                                <td><t t-out="o.origin or '-'"/></td>
+                                <td class="rcr-info-label">Vendor Address</td>
+                                <td>
+                                    <t t-out="', '.join(filter(None, [o.partner_id.street or '', o.partner_id.city or ''])) or '-'"/>
+                                    <t t-if="o.partner_id.phone"><br/>Tel: <t t-out="o.partner_id.phone"/></t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="rcr-info-label">Scheduled Date</td>
+                                <td><t t-out="o.scheduled_date.strftime('%d/%m/%Y %H:%M') if o.scheduled_date else '-'"/></td>
+                                <td class="rcr-info-label">Status</td>
+                                <td>
+                                    <t t-if="o.state == 'draft'">Draft</t>
+                                    <t t-if="o.state == 'waiting'">Waiting</t>
+                                    <t t-if="o.state == 'confirmed'">Confirmed</t>
+                                    <t t-if="o.state == 'assigned'">Ready</t>
+                                    <t t-if="o.state == 'done'">Done</t>
+                                    <t t-if="o.state == 'cancel'">Cancelled</t>
+                                </td>
+                            </tr>
+                            <tr t-if="o.backorder_id">
+                                <td class="rcr-info-label">Backorder of</td>
+                                <td colspan="3"><t t-out="o.backorder_id.name"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- Product Table -->
+                        <table class="rcr-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:25px;">NO</th>
+                                    <th style="width:90px;">PRODUCT CODE</th>
+                                    <th style="width:55px;">IMAGE</th>
+                                    <th>DESCRIPTION</th>
+                                    <th style="width:70px;">QTY RECEIVED</th>
+                                    <th style="width:100px;">DESTINATION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="n" t-value="0"/>
+                                <t t-set="total_qty" t-value="0"/>
+                                <t t-foreach="o.move_ids_without_package" t-as="move">
+                                    <t t-set="n" t-value="n + 1"/>
+                                    <t t-set="total_qty" t-value="total_qty + move.quantity_done"/>
+                                    <tr>
+                                        <td class="rcr-center"><t t-out="n"/></td>
+                                        <td><t t-out="move.product_id.default_code or '-'"/></td>
+                                        <td class="rcr-center">
+                                            <img t-if="move.ref_product_image" t-att-src="image_data_uri(move.ref_product_image)" class="rcr-img"/>
+                                            <img t-elif="move.product_id.image_128" t-att-src="image_data_uri(move.product_id.image_128)" class="rcr-img"/>
+                                            <span t-else="" style="color:#999;">-</span>
+                                        </td>
+                                        <td><t t-out="move.product_id.name"/></td>
+                                        <td class="rcr-center"><t t-out="'%.0f' % move.quantity_done"/></td>
+                                        <td><t t-out="move.location_dest_id.name"/></td>
+                                    </tr>
+                                </t>
+                                <!-- Total Row -->
+                                <tr style="background: #f5f5f5; font-weight: bold;">
+                                    <td colspan="4" style="text-align: right; padding-right: 10px;">TOTAL</td>
+                                    <td class="rcr-center"><t t-out="'%.0f' % total_qty"/></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Signatures -->
+                        <div class="rcr-sig-section">
+                            <div class="rcr-sig-box">
+                                <div class="rcr-sig-inner">
+                                    <div class="rcr-sig-title">QC INSPECTOR</div>
+                                    <div class="rcr-sig-area">Tanda tangan</div>
+                                    <div class="rcr-sig-info">
+                                        <strong>Nama:</strong> ____________________<br/>
+                                        <strong>Tanggal:</strong> ____________________
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rcr-sig-box">
+                                <div class="rcr-sig-inner">
+                                    <div class="rcr-sig-title">INVENTORY TEAM</div>
+                                    <!-- Signature area with fixed height -->
+                                    <div class="rcr-sig-area">
+                                        <t t-if="o.inventory_signature">
+                                            <img t-att-src="image_data_uri(o.inventory_signature)"/>
+                                        </t>
+                                        <t t-else="">Tanda tangan</t>
+                                    </div>
+                                    <div class="rcr-sig-info">
+                                        <strong>Nama:</strong> <t t-out="o.inventory_signed_by_id.name if o.inventory_signed_by_id else '____________________'"/><br/>
+                                        <strong>Tanggal:</strong> <t t-out="o.inventory_signed_date.strftime('%d/%m/%Y %H:%M') if o.inventory_signed_date else '____________________'"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rcr-sig-box">
+                                <div class="rcr-sig-inner">
+                                    <div class="rcr-sig-title">VENDOR</div>
+                                    <!-- Signature area with fixed height -->
+                                    <div class="rcr-sig-area">
+                                        <t t-if="o.vendor_signature">
+                                            <img t-att-src="image_data_uri(o.vendor_signature)"/>
+                                        </t>
+                                        <t t-else="">Tanda tangan</t>
+                                    </div>
+                                    <div class="rcr-sig-info">
+                                        <strong>Nama:</strong> <t t-out="o.partner_id.name if o.vendor_signature else '____________________'"/><br/>
+                                        <strong>Tanggal:</strong> <t t-out="o.vendor_signed_date.strftime('%d/%m/%Y %H:%M') if o.vendor_signed_date else '____________________'"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rcr-note">
+                            <strong>Catatan:</strong> Dokumen ini merupakan bukti penerimaan barang dari Vendor. 
+                            Pastikan semua data sudah sesuai sebelum menandatangani dokumen ini.
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

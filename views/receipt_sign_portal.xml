@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================= -->
+    <!-- PORTAL SIGNATURE TEMPLATES -->
+    <!-- ============================================= -->
+
+    <!-- Signature Page for Vendor -->
+    <template id="receipt_sign_page" name="Receipt Signature Page">
+        <html>
+            <head>
+                <title>Sign Receipt - <t t-out="picking.name"/></title>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+                <style>
+                    body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+                    .sign-card { max-width: 600px; margin: 30px auto; }
+                    #signaturePad { touch-action: none; }
+                </style>
+            </head>
+            <body>
+                <div class="container py-4">
+                    <div class="card shadow sign-card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-edit me-2"></i>Receipt Signature Request
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Receipt Summary -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold">Receipt Details</h6>
+                                <table class="table table-sm mb-0">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%;">Receipt Number</td>
+                                        <td class="fw-bold"><t t-out="picking.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">PO Reference</td>
+                                        <td><t t-out="picking.origin or '-'"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Vendor</td>
+                                        <td><t t-out="picking.partner_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Company</td>
+                                        <td><t t-out="picking.company_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- Products Summary -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold">Products Received</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-center" style="width: 80px;">Qty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="picking.move_ids_without_package" t-as="move">
+                                            <tr>
+                                                <td><t t-out="move.product_id.name"/></td>
+                                                <td class="text-center"><t t-out="int(move.quantity_done)"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Signature Pad -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold">Your Signature</h6>
+                                <p class="text-muted small mb-2">Please sign below to confirm receipt of goods.</p>
+                                <div class="border rounded p-2 bg-light">
+                                    <canvas id="signaturePad" style="width: 100%; height: 180px; border: 1px dashed #ccc; background: white; border-radius: 4px;"></canvas>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="clearSignature">
+                                    <i class="fas fa-eraser me-1"></i>Clear
+                                </button>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-success btn-lg" id="submitSignature">
+                                    <i class="fas fa-check me-2"></i>Confirm &amp; Submit Signature
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signature Pad JavaScript -->
+                <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var canvas = document.getElementById('signaturePad');
+                        var signaturePad = new SignaturePad(canvas, {
+                            backgroundColor: 'rgb(255, 255, 255)',
+                            penColor: 'rgb(0, 0, 0)'
+                        });
+
+                        // Resize canvas
+                        function resizeCanvas() {
+                            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+                            canvas.width = canvas.offsetWidth * ratio;
+                            canvas.height = canvas.offsetHeight * ratio;
+                            var ctx = canvas.getContext("2d");
+                            ctx.scale(ratio, ratio);
+                            // Fill white background
+                            ctx.fillStyle = 'rgb(255, 255, 255)';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            signaturePad.clear();
+                        }
+
+                        window.addEventListener('resize', resizeCanvas);
+                        resizeCanvas();
+
+                        // Clear button
+                        document.getElementById('clearSignature').addEventListener('click', function() {
+                            signaturePad.clear();
+                        });
+
+                        // Submit button
+                        document.getElementById('submitSignature').addEventListener('click', function() {
+                            if (signaturePad.isEmpty()) {
+                                alert('Please provide a signature first.');
+                                return;
+                            }
+
+                            var btn = this;
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+
+                            var signatureData = signaturePad.toDataURL('image/png');
+                            var token = '<t t-out="picking.vendor_sign_token"/>';
+
+                            fetch('/receipt/sign/' + token + '/submit', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    method: 'call',
+                                    params: {
+                                        signature: signatureData
+                                    }
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.result &amp;&amp; data.result.success) {
+                                    document.body.innerHTML = '<div class="container py-5 text-center"><div class="card shadow" style="max-width:500px;margin:auto;"><div class="card-body py-5"><i class="fas fa-check-circle text-success" style="font-size:64px;"></i><h3 class="mt-4">Thank You!</h3><p class="text-muted">Your signature has been submitted successfully.</p></div></div></div>';
+                                } else {
+                                    alert('Error: ' + (data.result ? data.result.error : 'Unknown error'));
+                                    btn.disabled = false;
+                                    btn.innerHTML = '<i class="fas fa-check me-2"></i>Confirm &amp; Submit Signature';
+                                }
+                            })
+                            .catch(error => {
+                                alert('Error submitting signature: ' + error);
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-check me-2"></i>Confirm &amp; Submit Signature';
+                            });
+                        });
+                    });
+                </script>
+            </body>
+        </html>
+    </template>
+
+    <!-- Already Signed Page -->
+    <template id="receipt_sign_already_signed" name="Receipt Already Signed">
+        <html>
+            <head>
+                <title>Already Signed</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+            </head>
+            <body style="background: #f5f5f5;">
+                <div class="container py-5">
+                    <div class="card shadow text-center" style="max-width: 500px; margin: auto;">
+                        <div class="card-body py-5">
+                            <i class="fas fa-check-circle text-success" style="font-size: 64px;"></i>
+                            <h3 class="mt-4">Already Signed</h3>
+                            <p class="text-muted">
+                                This receipt (<t t-out="picking.name"/>) has already been signed on
+                                <strong><t t-out="picking.vendor_signed_date.strftime('%d/%m/%Y %H:%M') if picking.vendor_signed_date else ''"/></strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- Not Found Page -->
+    <template id="receipt_sign_not_found" name="Receipt Not Found">
+        <html>
+            <head>
+                <title>Not Found</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+            </head>
+            <body style="background: #f5f5f5;">
+                <div class="container py-5">
+                    <div class="card shadow text-center" style="max-width: 500px; margin: auto;">
+                        <div class="card-body py-5">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 64px;"></i>
+                            <h3 class="mt-4">Receipt Not Found</h3>
+                            <p class="text-muted">
+                                The receipt you are looking for could not be found.
+                                Please check the link and try again.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>
+    </template>
+
+    <!-- ============================================= -->
+    <!-- VIEW: URL Display Popup -->
+    <!-- ============================================= -->
+    <record id="view_picking_vendor_sign_url" model="ir.ui.view">
+        <field name="name">stock.picking.vendor.sign.url.form</field>
+        <field name="model">stock.picking</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Signature Link">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Share this link with the vendor</strong><br/>
+                        The vendor can open this link to sign the receipt without logging into Odoo.
+                    </div>
+                    <group>
+                        <field name="vendor_sign_url" widget="CopyClipboardChar" readonly="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Close" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
