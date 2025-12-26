@@ -1,0 +1,80 @@
+# -------------------------
+# OS TRASH
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# PYTHON / ODOO
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python environment files
+.env
+*.env
+.env.*
+
+# Odoo temp, sessions, configs
+.odoo/
+.odoo_session
+.odoo_session_id
+odoo.conf
+*.conf
+
+# Odoo databases & backups
+*.db
+*.db-shm
+*.db-wal
+*.sql
+*.sql.gz
+*.dump
+
+# Odoo compiled translation files
+*.mo
+
+# -------------------------
+# ODOO MODULE STATIC GENERATED
+# -------------------------
+addons/*/static/lib/
+addons//static/src/js/.min.js
+addons//static/src/css/.min.css
+*.map
+
+# -------------------------
+# EDITOR / IDE GARBAGE
+# -------------------------
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# -------------------------
+# LOGS & CACHE
+# -------------------------
+*.log
+.cache/
+*.tmp
+*.pid
+
+# -------------------------
+# NODE / FRONTEND
+# -------------------------
+node_modules/
+*.map
+dist/
+build/
+
+# -------------------------
+# OTHER USELESS NOISE
+# -------------------------
+*.bak
+*.swp
+*.orig
