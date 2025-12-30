@@ -24,12 +24,20 @@
             <!-- VENDOR SIGNATURE BUTTON (for validated Receipts) -->
             <!-- ============================================= -->
             <xpath expr="//button[@name='button_validate']" position="after">
+                <!-- Request Vendor Signature - only when validated but not yet requested -->
                 <button name="action_request_vendor_signature"
                         type="object"
                         string="Request Vendor Signature"
                         class="btn-secondary"
                         attrs="{'invisible': ['|', '|', ('state', '!=', 'done'), ('picking_type_sequence_code', '!=', 'IN'), ('receipt_sign_state', 'in', ['requested', 'signed'])]}"
                         icon="fa-pencil"/>
+                <!-- View Signature Link - when already requested but not yet signed -->
+                <button name="action_view_vendor_sign_url"
+                        type="object"
+                        string="View Signature Link"
+                        class="btn-secondary"
+                        attrs="{'invisible': ['|', '|', ('state', '!=', 'done'), ('picking_type_sequence_code', '!=', 'IN'), ('receipt_sign_state', '!=', 'requested')]}"
+                        icon="fa-link"/>
             </xpath>
             
             <!-- ============================================= -->

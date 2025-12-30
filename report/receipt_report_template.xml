@@ -192,7 +192,7 @@
                                     </div>
                                     <div class="rcr-sig-info">
                                         <strong>Nama:</strong> <t t-out="o.inventory_signed_by_id.name if o.inventory_signed_by_id else '____________________'"/><br/>
-                                        <strong>Tanggal:</strong> <t t-out="o.inventory_signed_date.strftime('%d/%m/%Y %H:%M') if o.inventory_signed_date else '____________________'"/>
+                                        <strong>Tanggal:</strong> <t t-out="o.inventory_signed_date_display"/>
                                     </div>
                                 </div>
                             </div>
@@ -208,7 +208,7 @@
                                     </div>
                                     <div class="rcr-sig-info">
                                         <strong>Nama:</strong> <t t-out="o.partner_id.name if o.vendor_signature else '____________________'"/><br/>
-                                        <strong>Tanggal:</strong> <t t-out="o.vendor_signed_date.strftime('%d/%m/%Y %H:%M') if o.vendor_signed_date else '____________________'"/>
+                                        <strong>Tanggal:</strong> <t t-out="o.vendor_signed_date_display"/>
                                     </div>
                                 </div>
                             </div>

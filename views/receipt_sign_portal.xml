@@ -50,25 +50,22 @@
                                 </table>
                             </div>
 
-                            <!-- Products Summary -->
+                            <!-- Products Summary (Quick Count) -->
                             <div class="mb-4">
-                                <h6 class="fw-bold">Products Received</h6>
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Product</th>
-                                            <th class="text-center" style="width: 80px;">Qty</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="picking.move_ids_without_package" t-as="move">
-                                            <tr>
-                                                <td><t t-out="move.product_id.name"/></td>
-                                                <td class="text-center"><t t-out="int(move.quantity_done)"/></td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-                                </table>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="fw-bold">Total Products:</span>
+                                        <span class="badge bg-primary ms-2"><t t-out="len(picking.move_ids_without_package)"/></span>
+                                    </div>
+                                    <a t-attf-href="/receipt/sign/#{picking.vendor_sign_token}/report" 
+                                       target="_blank" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-file-pdf me-1"></i>View Full Report (PDF)
+                                    </a>
+                                </div>
+                                <p class="text-muted small mt-2 mb-0">
+                                    Please review the full report before signing.
+                                </p>
                             </div>
 
                             <!-- Signature Pad -->
@@ -190,7 +187,7 @@
                             <h3 class="mt-4">Already Signed</h3>
                             <p class="text-muted">
                                 This receipt (<t t-out="picking.name"/>) has already been signed on
-                                <strong><t t-out="picking.vendor_signed_date.strftime('%d/%m/%Y %H:%M') if picking.vendor_signed_date else ''"/></strong>.
+                                <strong><t t-out="vendor_signed_date_str"/></strong>.
                             </p>
                         </div>
                     </div>

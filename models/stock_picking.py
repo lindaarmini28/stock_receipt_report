@@ -37,6 +37,11 @@ class StockPicking(models.Model):
         help="Date when inventory team validated the receipt",
         copy=False,
     )
+    inventory_signed_date_display = fields.Char(
+        string="Inventory Signed Date (Display)",
+        compute='_compute_signed_dates_display',
+        help="Inventory signed date formatted in company timezone",
+    )
 
     # =============================================
     # VENDOR SIGNATURE (via portal link)
@@ -51,6 +56,11 @@ class StockPicking(models.Model):
         string="Vendor Signed Date",
         help="Date when vendor signed the receipt",
         copy=False,
+    )
+    vendor_signed_date_display = fields.Char(
+        string="Vendor Signed Date (Display)",
+        compute='_compute_signed_dates_display',
+        help="Vendor signed date formatted in company timezone",
     )
     vendor_sign_token = fields.Char(
         string="Vendor Sign Token",
@@ -75,6 +85,27 @@ class StockPicking(models.Model):
         ('signed', 'Vendor Signed'),
     ], string="Signature Status", default='draft', copy=False, tracking=True,
        help="Tracks the receipt signature workflow status")
+
+    def _convert_to_company_tz(self, dt):
+        """Convert UTC datetime to local date (date only, no time)."""
+        if not dt:
+            return '____________________'
+        # Simple date-only format (tanggal saja, tanpa jam)
+        try:
+            return dt.strftime('%d/%m/%Y')
+        except Exception:
+            return '____________________'
+
+    @api.depends('inventory_signed_date', 'vendor_signed_date', 'company_id')
+    def _compute_signed_dates_display(self):
+        """Compute display dates in company timezone."""
+        for picking in self:
+            picking.inventory_signed_date_display = picking._convert_to_company_tz(
+                picking.inventory_signed_date
+            )
+            picking.vendor_signed_date_display = picking._convert_to_company_tz(
+                picking.vendor_signed_date
+            )
 
     @api.depends('vendor_sign_token')
     def _compute_vendor_sign_url(self):
@@ -109,6 +140,19 @@ class StockPicking(models.Model):
         self.receipt_sign_state = 'requested'
         
         # Return action to show the URL
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Vendor Signature Link',
+            'res_model': 'stock.picking',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref('stock_receipt_report.view_picking_vendor_sign_url').id,
+            'target': 'new',
+        }
+
+    def action_view_vendor_sign_url(self):
+        """Show existing vendor sign URL in popup (for when dialog was closed)."""
+        self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
             'name': 'Vendor Signature Link',
